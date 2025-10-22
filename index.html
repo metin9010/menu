@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>منوی آنلاین رستوران بزرگ میلاد</title>
+
+<!-- Vazirmatn (online) -->
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+
+<style>
+  :root{
+    --primary:#ff6a00;
+    --primary-2:#ff984d;
+    --bg:#fffaf4;
+    --card:#fff;
+    --muted:#777;
+    --radius:14px;
+    --safe-bottom: env(safe-area-inset-bottom, 12px);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:"Vazirmatn",sans-serif;background:var(--bg);color:#111;direction:rtl;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+  /* HEADER (fixed) */
+  header.app{
+    position:fixed;top:0;left:0;right:0;height:78px;padding:12px 16px;
+    background:linear-gradient(90deg,var(--primary),var(--primary-2));
+    color:#fff;display:flex;align-items:center;gap:12px;z-index:60;
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);
+  }
+  .app-left{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+  .app-title{font-weight:900;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .app-sub{font-size:.85rem;opacity:.95}
+  .date-row{font-size:.85rem;opacity:.95}
+  .customer-input{width:220px;max-width:40vw;padding:8px;border-radius:10px;border:none;font-weight:700}
+  /* TAB BAR (below header) */
+  .tab-bar{
+    position:fixed;top:78px;left:0;right:0;height:56px;display:flex;align-items:center;gap:6px;padding:6px 8px;
+    background:rgba(255,255,255,0.88);backdrop-filter:blur(6px);z-index:55;border-bottom:1px solid rgba(0,0,0,0.04);
+    overflow-x:auto;scrollbar-width:none;
+  }
+  .tab-bar::-webkit-scrollbar{display:none}
+  .tab-btn{min-width:110px;background:transparent;border-radius:12px;padding:8px 12px;border:none;cursor:pointer;font-weight:800;color:#444;margin-right:6px}
+  .tab-btn.active{background:linear-gradient(90deg,var(--primary),var(--primary-2));color:#fff;box-shadow:0 6px 18px rgba(255,106,0,0.18)}
+  /* MAIN content */
+  main{position:fixed;top:136px;bottom:110px;left:0;right:0;overflow:auto;padding:12px 12px 20px;}
+  .section-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+  .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 8px 20px rgba(0,0,0,0.06);display:flex;flex-direction:column;justify-content:space-between;min-height:80px;}
+  .card .top{display:flex;align-items:center;gap:12px;justify-content:flex-end}
+  .icon-circle{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(255,106,0,0.08),rgba(255,154,77,0.06));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px}
+  .title{font-weight:800;font-size:1rem}
+  .price{color:var(--primary);font-weight:900;font-size:0.98rem}
+  .controls{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:flex-start}
+  .ctrl-btn{width:44px;height:44px;border-radius:10px;border:none;font-weight:900;font-size:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,0.06)}
+  .plus{background:linear-gradient(90deg,#10b981,#059669);color:#fff}
+  .minus{background:linear-gradient(90deg,#ef4444,#dc2626);color:#fff}
+  .qty-badge{min-width:42px;height:42px;border-radius:10px;background:linear-gradient(90deg,var(--primary),var(--primary-2));color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center}
+  /* floating total (bottom) */
+  .floating-total{
+    position:fixed;left:12px;right:12px;bottom:12px;padding:12px 16px;background:linear-gradient(90deg,var(--primary),var(--primary-2));
+    color:#fff;border-radius:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;z-index:70;
+    box-shadow:0 20px 50px rgba(255,106,0,0.18);
+  }
+  .floating-total .left{display:flex;flex-direction:column}
+  .floating-total .total-price{font-weight:900;font-size:1.15rem}
+  .floating-total .total-items{font-size:.9rem;opacity:.95}
+  .floating-total button{background:rgba(255,255,255,0.12);border:none;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer}
+  .floating-actions{display:flex;gap:8px;align-items:center}
+  .clear-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.18);padding:8px 12px;border-radius:10px;color:#fff;font-weight:800;cursor:pointer}
+  /* modal invoice */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:120}
+  .modal{width:92%;max-width:520px;background:#fff;border-radius:14px;padding:16px;max-height:86vh;overflow:auto}
+  .modal h3{margin:0 0 8px 0;color:var(--primary)}
+  .modal .line{height:1px;background:#f0f0f0;margin:12px 0}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+  .muted{color:var(--muted);font-size:.95rem}
+  /* watermark (subtle bottom center, visible on all pages) */
+  .watermark{
+    position:fixed;bottom:8px;left:0;right:0;text-align:center;pointer-events:none;z-index:40;
+    opacity:0.18;color:#111;font-weight:800;font-size:13px;
+  }
+  /* responsive */
+  @media (max-width:420px){
+    .card{min-height:90px;padding:10px}
+    .tab-btn{min-width:90px;padding:8px}
+    .customer-input{max-width:34vw}
+    header.app{height:96px;padding:10px 12px}
+    .tab-bar{top:96px}
+    main{top:152px}
+    .floating-total{bottom:16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="app" role="banner">
+  <div style="display:flex;align-items:center;gap:12px;width:100%">
+    <div class="app-left">
+      <div class="app-title">منوی آنلاین رستوران بزرگ میلاد</div>
+      <div class="app-sub date-row" id="headerDate">—</div>
+    </div>
+
+    <input id="customerName" class="customer-input" placeholder="نام مشتری (اختیاری)" aria-label="نام مشتری">
+  </div>
+</header>
+
+<div class="tab-bar" role="tablist" id="tabBar"></div>
+
+<main id="mainContent" role="main" aria-live="polite">
+  <!-- sections rendered dynamically -->
+</main>
+
+<!-- floating total -->
+<div class="floating-total" id="floatingTotal" role="region" aria-label="جمع کل">
+  <div class="left">
+    <div class="total-price" id="totalPrice">۰ تومان</div>
+    <div class="total-items muted" id="totalItems">۰ آیتم</div>
+  </div>
+  <div class="floating-actions">
+    <button id="openInvoiceBtn" aria-label="مشاهده فاکتور">🧾 فاکتور</button>
+    <button id="clearAllBtn" class="clear-btn" aria-label="پاک‌سازی کامل فاکتور">پاک کردن کل</button>
+  </div>
+</div>
+
+<!-- watermark (option 2: subtle) -->
+<div class="watermark">گروه برنامه‌نویسی هوشمند شهرام دانش – 09145022080</div>
+
+<!-- modal invoice -->
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="invoiceTitle">
+    <h3 id="invoiceTitle">فاکتور سفارش</h3>
+    <div class="muted" id="invoiceDate">—</div>
+    <div style="height:8px"></div>
+    <div class="modal-actions" style="display:flex;gap:8px;margin-bottom:8px">
+      <button id="printBtn" style="flex:1;background:var(--primary);color:#fff;border:none;padding:10px;border-radius:10px;font-weight:800;cursor:pointer">چاپ / ذخیره</button>
+      <button id="modalClearBtn" style="flex:1;background:#f5f5f5;border:none;padding:10px;border-radius:10px;cursor:pointer">پاک کردن فاکتور</button>
+      <button id="closeModalBtn" style="flex:1;background:#eee;border:none;padding:10px;border-radius:10px;cursor:pointer">بستن</button>
+    </div>
+    <div class="line"></div>
+    <div id="invoiceItems"></div>
+    <div class="line"></div>
+    <div class="row"><div style="font-weight:900">جمع کل</div><div id="invoiceTotal" style="font-weight:900;color:var(--primary)"></div></div>
+  </div>
+</div>
+
+<script>
+/* ---------- DATA ---------- */
+const menuSections = [
+  { id:'kabob', title:'انواع کباب', icon:'🔥', items:[
+    {id:'joje',name:'جوجه',price:120000,icon:'🍗'},
+    {id:'kobideh',name:'کوبیده',price:110000,icon:'🥩'},
+    {id:'gosht',name:'گوشت',price:130000,icon:'🍖'},
+    {id:'jigar',name:'جگر',price:120000,icon:'🍖'},
+    {id:'delgho',name:'دل قلوه',price:120000,icon:'❤️'},
+    {id:'khoshgoosht',name:'خوش گوشت',price:110000,icon:'🍖'},
+    {id:'jigarsafid',name:'جگر سفید',price:70000,icon:'🫛'},
+    {id:'raste',name:'راسته',price:250000,icon:'👑'},
+    {id:'goje',name:'گوجه',price:30000,icon:'🍅'},
+    {id:'rollet',name:'رولت',price:220000,icon:'🍖'}
+  ]},
+  { id:'berenj', title:'انواع برنج', icon:'🍚', items:[
+    {id:'khooshe',name:'خورشت قیمه',price:350000,icon:'🍛'},
+    {id:'mahiche',name:'ماهیچه',price:650000,icon:'🥘'},
+    {id:'choj1',name:'چلو جوجه تک سیخه',price:200000,icon:'🍗'},
+    {id:'choj2',name:'چلو جوجه دو سیخه',price:310000,icon:'🍗'},
+    {id:'chkob1',name:'چلو کوبیده تک سیخه',price:190000,icon:'🍚'},
+    {id:'chkob2',name:'چلو کوبیده دو سیخه',price:300000,icon:'🍚'}
+  ]},
+  { id:'abgoosht', title:'آبگوشت', icon:'🥣', items:[
+    {id:'abgoosht',name:'آبگوشت',price:300000,icon:'🥣'}
+  ]},
+  { id:'noshidani', title:'انواع نوشیدنی', icon:'🥤', items:[
+    {id:'noshabe',name:'نوشابه',price:40000,icon:'🥤'},
+    {id:'delster',name:'دلستر',price:40000,icon:'🍹'},
+    {id:'energy',name:'انرژی‌زا',price:40000,icon:'⚡'},
+    {id:'doogh',name:'دوغ',price:40000,icon:'🥛'}
+  ]},
+  { id:'salad', title:'انواع سالاد', icon:'🥗', items:[
+    {id:'mast',name:'ماست خیار',price:40000,icon:'🥒'},
+    {id:'torshi',name:'ترشی',price:40000,icon:'🫙'},
+    {id:'zeytoon',name:'زیتون',price:40000,icon:'🫒'},
+    {id:'zeytoonpar',name:'زیتون پرورده',price:40000,icon:'🫒'},
+    {id:'mastmoosir',name:'ماست موسیر',price:40000,icon:'🥛'}
+  ]}
+];
+
+/* ---------- STATE ---------- */
+let order = JSON.parse(localStorage.getItem('milad_order_v2') || '{}');
+const STORAGE_KEY = 'milad_order_v2';
+
+/* ---------- UTIL ---------- */
+function saveOrder(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(order)); }
+function formatPrice(n){ return n.toLocaleString('fa-IR') + ' تومان'; }
+
+/* Persian (Solar Hijri) date with weekday and numeric */
+function getPersianDateStrings(){
+  const now = new Date();
+  const localeFull = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const weekdayAndFull = localeFull.format(now);
+  const parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(now);
+  const year = parts.find(p=>p.type==='year')?.value || '';
+  const month = parts.find(p=>p.type==='month')?.value || '';
+  const day = parts.find(p=>p.type==='day')?.value || '';
+  const numeric = `${year}/${month}/${day}`;
+  return { weekdayAndFull, numeric };
+}
+
+/* ---------- RENDER UI ---------- */
+const tabBar = document.getElementById('tabBar');
+const main = document.getElementById('mainContent');
+const totalPriceEl = document.getElementById('totalPrice');
+const totalItemsEl = document.getElementById('totalItems');
+const headerDateEl = document.getElementById('headerDate');
+
+function renderHeaderDate(){
+  const d = getPersianDateStrings();
+  // show numeric and weekday (short)
+  headerDateEl.textContent = `${d.numeric} — ${d.weekdayAndFull.split('،')[0]}`;
+}
+renderHeaderDate();
+setInterval(renderHeaderDate, 60*1000); // update every minute
+
+function renderTabs(){
+  tabBar.innerHTML = '';
+  menuSections.forEach((sec, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (idx===0 ? ' active':'');
+    btn.dataset.tab = sec.id;
+    btn.type = 'button';
+    btn.innerHTML = `<span style="font-size:18px;margin-left:8px">${sec.icon}</span><span>${sec.title}</span>`;
+    btn.addEventListener('click', ()=> switchTo(sec.id));
+    tabBar.appendChild(btn);
+  });
+}
+
+function renderSection(sectionId){
+  const sec = menuSections.find(s=>s.id===sectionId);
+  if(!sec) return;
+  main.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'section-grid';
+  sec.items.forEach(it => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = it.id;
+    const qty = order[it.id] || 0;
+    card.innerHTML = `
+      <div class="top">
+        <div class="title">${it.name}</div>
+        <div style="width:12px"></div>
+        <div class="icon-circle" aria-hidden="true">${it.icon}</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+        <div>
+          <div class="price">${formatPrice(it.price)}</div>
+          <div class="muted" style="margin-top:6px;font-size:0.88rem">هر واحد</div>
+        </div>
+        <div class="controls" aria-hidden="false">
+          <button class="ctrl-btn minus" data-id="${it.id}" title="کم کردن">−</button>
+          <div class="qty-badge" id="qty-${it.id}">${qty}</div>
+          <button class="ctrl-btn plus" data-id="${it.id}" title="افزودن">+</button>
+        </div>
+      </div>
+    `;
+    if(qty>0) card.classList.add('active');
+    grid.appendChild(card);
+  });
+  main.appendChild(grid);
+  attachControlListeners();
+}
+
+/* ---------- TAB SWITCH ---------- */
+let currentTab = menuSections[0].id;
+function switchTo(tabId){
+  currentTab = tabId;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===tabId));
+  renderSection(tabId);
+}
+
+/* ---------- CONTROLS (click + long-press) ---------- */
+function attachControlListeners(){
+  // remove existing listeners by cloning nodes (simple)
+  document.querySelectorAll('.ctrl-btn').forEach(btn=>{
+    btn.replaceWith(btn.cloneNode(true));
+  });
+
+  document.querySelectorAll('.ctrl-btn').forEach(btn=>{
+    const id = btn.dataset.id;
+    const actionIsPlus = btn.classList.contains('plus');
+    let pressTimer = null;
+    const fastStep = 5;
+
+    const applyChange = (delta) => {
+      order[id] = Math.max(0, (order[id]||0) + delta);
+      if(order[id] === 0) delete order[id];
+      const el = document.getElementById('qty-'+id);
+      if(el) el.textContent = order[id] || 0;
+      saveOrder(); updateTotals();
+    };
+
+    // click (single)
+    btn.addEventListener('click', (ev)=>{
+      ev.preventDefault(); ev.stopPropagation();
+      applyChange(actionIsPlus ? 1 : -1);
+    });
+
+    // pointer/touch for long press -> step of 5
+    const startPress = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      pressTimer = setTimeout(()=>{
+        applyChange(actionIsPlus ? fastStep : -fastStep);
+        // continue repeating while holding
+        pressTimer = setInterval(()=> applyChange(actionIsPlus ? fastStep : -fastStep), 220);
+      }, 450);
+    };
+    const endPress = (e) => {
+      if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+    };
+
+    btn.addEventListener('pointerdown', startPress, {passive:false});
+    btn.addEventListener('pointerup', endPress);
+    btn.addEventListener('pointercancel', endPress);
+    btn.addEventListener('pointerleave', endPress);
+  });
+}
+
+/* ---------- TOTALS & UI ---------- */
+function updateTotals(){
+  const totalItems = Object.values(order).reduce((s,n)=>s+n,0);
+  const totalPrice = Object.entries(order).reduce((s,[id,q])=>{
+    const item = menuSections.flatMap(s=>s.items).find(i=>i.id===id);
+    return s + (item ? item.price * q : 0);
+  },0);
+  totalPriceEl.textContent = totalPrice ? formatPrice(totalPrice) : '۰ تومان';
+  totalItemsEl.textContent = `${totalItems} آیتم`;
+  // small UI feedback
+  const floating = document.getElementById('floatingTotal');
+  floating.style.opacity = 1;
+}
+
+/* ---------- CLEAR ALL ---------- */
+function clearAllOrder(confirmAsk = true){
+  if(confirmAsk && !confirm('آیا از پاک‌سازی کامل فاکتور مطمئن هستید؟')) return;
+  order = {};
+  saveOrder();
+  // clear customer name
+  document.getElementById('customerName').value = '';
+  // re-render current section to reset badges
+  renderSection(currentTab);
+  updateTotals();
+  // hide modal if open
+  closeInvoice();
+}
+
+/* ---------- INVOICE modal ---------- */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const invoiceItemsEl = document.getElementById('invoiceItems');
+const invoiceTotalEl = document.getElementById('invoiceTotal');
+const invoiceDateEl = document.getElementById('invoiceDate');
+
+document.getElementById('openInvoiceBtn').addEventListener('click', openInvoice);
+document.getElementById('closeModalBtn').addEventListener('click', closeInvoice);
+document.getElementById('modalClearBtn').addEventListener('click', ()=> { if(confirm('آیا فاکتور پاک شود؟')) clearAllOrder(false); });
+document.getElementById('clearAllBtn').addEventListener('click', ()=> clearAllOrder(true));
+document.getElementById('printBtn').addEventListener('click', ()=>{
+  const w = window.open('','_blank');
+  const html = buildInvoiceHTML();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  w.print();
+});
+
+function openInvoice(){
+  const name = document.getElementById('customerName').value || 'بدون نام';
+  const entries = Object.entries(order).filter(([id,q])=>q>0);
+  invoiceItemsEl.innerHTML = '';
+  let total = 0;
+  if(entries.length===0){
+    invoiceItemsEl.innerHTML = '<div class="muted" style="text-align:center;padding:24px">هیچ آیتمی انتخاب نشده است.</div>';
+  } else {
+    entries.forEach(([id,qty])=>{
+      const item = menuSections.flatMap(s=>s.items).find(i=>i.id===id);
+      const row = document.createElement('div');
+      row.className = 'row';
+      const sum = item.price * qty;
+      total += sum;
+      row.innerHTML = `<div style="display:flex;gap:12px;align-items:center"><div style="font-size:20px">${item.icon}</div><div><div style="font-weight:800">${item.name}</div><div class="muted">${qty} × ${item.price.toLocaleString('fa-IR')} تومان</div></div></div><div style="font-weight:900">${sum.toLocaleString('fa-IR')} تومان</div>`;
+      invoiceItemsEl.appendChild(row);
+    });
+  }
+  invoiceTotalEl.textContent = total ? total.toLocaleString('fa-IR') + ' تومان' : '۰ تومان';
+  const pd = getPersianDateStrings();
+  invoiceDateEl.textContent = `نام مشتری: ${name} — تاریخ: ${pd.numeric} — ${pd.weekdayAndFull.split('،')[0]}`;
+  modalBackdrop.style.display = 'flex';
+  modalBackdrop.setAttribute('aria-hidden','false');
+}
+
+function closeInvoice(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); }
+
+/* helper to build print HTML */
+function buildInvoiceHTML(){
+  const name = document.getElementById('customerName').value || 'بدون نام';
+  const entries = Object.entries(order).filter(([id,q])=>q>0);
+  let rows = '';
+  let total = 0;
+  entries.forEach(([id,qty])=>{
+    const item = menuSections.flatMap(s=>s.items).find(i=>i.id===id);
+    const sum = item.price * qty; total += sum;
+    rows += `<tr><td style="padding:8px;border-bottom:1px solid #eee">${item.name}</td><td style="padding:8px;border-bottom:1px solid #eee">${qty}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:left">${item.price.toLocaleString('fa-IR')} تومان</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:left">${sum.toLocaleString('fa-IR')} تومان</td></tr>`;
+  });
+  const pd = getPersianDateStrings();
+  return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>فاکتور</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <style>body{font-family:Vazirmatn,sans-serif;padding:18px;color:#111}table{width:100%;border-collapse:collapse}th{text-align:right;padding:6px}</style>
+    </head><body>
+    <h2 style="text-align:center;color:${getComputedStyle(document.documentElement).getPropertyValue('--primary')};">فاکتور سفارش</h2>
+    <div style="text-align:center;margin-bottom:8px">نام مشتری: ${name} — تاریخ: ${pd.numeric} — ${pd.weekdayAndFull.split('،')[0]}</div>
+    <table><thead><tr><th>نام آیتم</th><th>تعداد</th><th>قیمت واحد</th><th>قیمت کل</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="padding:12px;text-align:center">بدون سفارش</td></tr>'}</tbody></table>
+    <h3 style="text-align:left">جمع کل: ${total.toLocaleString('fa-IR')} تومان</h3>
+    <div style="margin-top:24px;font-size:12px;color:#666">گروه برنامه‌نویسی هوشمند شهرام دانش – 09145022080</div>
+    </body></html>`;
+}
+
+/* ---------- INIT ---------- */
+renderTabs();
+switchTo(menuSections[0].id);
+updateTotals(); // initial
+// re-render current to show stored badges
+renderSection(currentTab);
+
+/* close modal on backdrop click */
+modalBackdrop.addEventListener('click', (e)=>{
+  if(e.target === modalBackdrop) closeInvoice();
+});
+</script>
+</body>
+</html>
