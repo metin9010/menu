@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منوی آنلاین رستوران بزرگ میلاد</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
+<style>
+body {font-family:'Vazir',sans-serif; margin:0; padding:0; background:#fff8f0; transition: background 0.3s, color 0.3s;}
+body.night {background:#121212; color:#e0e0e0;}
+.total-bar {position:fixed; top:0; left:0; width:100%; background:#ff7f50; color:white; font-weight:bold; font-size:24px; text-align:center; padding:15px; box-shadow:0 2px 5px rgba(0,0,0,0.2); z-index:999;}
+footer {position:fixed; bottom:0; left:0; width:100%; background:linear-gradient(135deg,#ff7f50,#ffb347); color:white; text-align:center; padding:10px 0; font-size:18px; font-weight:bold; box-shadow:0 -2px 5px rgba(0,0,0,0.2); z-index:998;}
+footer.night {background:linear-gradient(135deg,#222,#555);}
+.container {max-width:600px; margin:10px auto 120px; padding:10px;}
+.group-select, #searchItem {width:100%; padding:12px; font-size:18px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;}
+.card {margin-top:10px; background:#f0f0f0; padding:12px; border-radius:12px; transition: background 0.3s, color 0.3s;}
+body.night .card {background:#1e1e1e; color:#e0e0e0;}
+.item-row {display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #ddd;}
+.item-name {flex:2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:16px;}
+.item-price {flex:1; text-align:left; font-size:16px;}
+.qty-control {flex:1; display:flex; justify-content:flex-end; align-items:center; gap:8px;}
+.qty-control button {width:50px; height:50px; border:none; background:#ff7f50; color:white; border-radius:8px; font-weight:bold; cursor:pointer; font-size:20px;}
+.qty-control span {min-width:35px; text-align:center; display:inline-block; font-size:18px;}
+.btn-secondary {background:#555; color:white; margin:5px; padding:10px 16px; cursor:pointer; border:none; border-radius:8px; font-size:16px;}
+.btn-secondary:hover {background:#333;}
+.btn-clear {background:#ff0000; color:#000; font-weight:bold;}
+table {width:100%; border-collapse:collapse;}
+th, td {border:1px solid #ccc; padding:6px; text-align:center; font-size:14px;}
+@media (max-width:480px){
+    .item-name, .item-price, .qty-control span {font-size:14px;}
+    .qty-control button {width:40px; height:40px; font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="total-bar" id="totalBar">جمع کل: ۰ تومان</div>
+
+<div class="container">
+<select id="groupSelect" class="group-select" onchange="renderItems()"></select>
+<input type="text" id="searchItem" placeholder="🔍 جستجوی آیتم" oninput="renderItems()">
+
+<div class="card" id="itemsContainer"></div>
+
+<div style="text-align:center; margin-top:10px;">
+<button class="btn-secondary btn-clear" onclick="clearOrder()">پاک کردن سفارش</button>
+<button class="btn-secondary" onclick="printInvoice()">چاپ فاکتور</button>
+<button class="btn-secondary" onclick="renderReport()">گزارش روزانه</button>
+<button class="btn-secondary" onclick="showMenuEditor()">ویرایش/ذخیره منو</button>
+<button class="btn-secondary" onclick="toggleNightMode()">🌙 حالت شب</button>
+</div>
+
+<div class="card">
+<h3>📋 فاکتور سفارش</h3>
+<table id="orderTable">
+<thead><tr><th>نام آیتم</th><th>تعداد</th><th>قیمت واحد</th><th>جمع</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>📊 گزارش روزانه</h3>
+<table id="reportTable">
+<thead><tr><th>تاریخ</th><th>جمع کل</th></tr></thead>
+<tbody></tbody>
+</table>
+<button class="btn-secondary" onclick="clearReport()">پاک کردن گزارش</button>
+</div>
+</div>
+
+<footer id="footer">
+🍽 منوی آنلاین رستوران بزرگ میلاد<br>
+<span id="date" style="font-size:14px;"></span>
+</footer>
+
+<script>
+// منوی دقیق رستوران
+let menu = [
+{name:"کوبیده", price:110000, group:"گوشت‌ها", qty:0},
+{name:"گوشت", price:130000, group:"گوشت‌ها", qty:0},
+{name:"قلوه", price:120000, group:"گوشت‌ها", qty:0},
+{name:"جوجه", price:110000, group:"گوشت‌ها", qty:0},
+{name:"جگر", price:120000, group:"گوشت‌ها", qty:0},
+{name:"جگر سفید", price:70000, group:"گوشت‌ها", qty:0},
+{name:"راسته", price:250000, group:"گوشت‌ها", qty:0},
+{name:"رولت", price:220000, group:"گوشت‌ها", qty:0},
+{name:"خورشت قیمه", price:350000, group:"خورشت‌ها", qty:0},
+{name:"ماهیچه", price:650000, group:"خورشت‌ها", qty:0},
+{name:"چلو جوجه تک سیخ", price:200000, group:"خورشت‌ها", qty:0},
+{name:"چلو جوجه دو سیخ", price:320000, group:"خورشت‌ها", qty:0},
+{name:"چلو کوبیده تک سیخ", price:190000, group:"خورشت‌ها", qty:0},
+{name:"چلو کوبیده دو سیخ", price:300000, group:"خورشت‌ها", qty:0},
+{name:"آش", price:80000, group:"ساده‌ها", qty:0},
+{name:"برنج خالی", price:80000, group:"ساده‌ها", qty:0},
+{name:"آبگوشت", price:300000, group:"ساده‌ها", qty:0},
+{name:"نوشابه شیشه", price:30000, group:"نوشیدنی و سالاد", qty:0},
+{name:"نوشابه قوطی بزرگ و کوچک", price:50000, group:"نوشیدنی و سالاد", qty:0},
+{name:"نوشابه ۱/۵ لیتر", price:60000, group:"نوشیدنی و سالاد", qty:0},
+{name:"دوغ آبعلی", price:40000, group:"نوشیدنی و سالاد", qty:0},
+{name:"دوغ لیوانی", price:30000, group:"نوشیدنی و سالاد", qty:0},
+{name:"ماست خیار", price:30000, group:"نوشیدنی و سالاد", qty:0},
+{name:"ترشی", price:30000, group:"نوشیدنی و سالاد", qty:0},
+{name:"زیتون ساده/پرورده", price:50000, group:"نوشیدنی و سالاد", qty:0},
+{name:"ماست موسیر", price:30000, group:"نوشیدنی و سالاد", qty:0}
+];
+
+let report = JSON.parse(localStorage.getItem("report")||"[]");
+
+// رندر گروه‌ها
+function renderGroupSelect(){
+    const groups = [...new Set(menu.map(i=>i.group))];
+    const sel = document.getElementById("groupSelect");
+    sel.innerHTML="";
+    groups.forEach(g=>{
+        const opt = document.createElement("option");
+        opt.value = g;
+        opt.textContent = g;
+        sel.appendChild(opt);
+    });
+}
+
+// رندر آیتم‌ها با جستجو از کل آیتم‌ها
+function renderItems(){
+    const search = document.getElementById("searchItem").value.trim();
+    const container = document.getElementById("itemsContainer");
+    container.innerHTML="";
+
+    let filteredItems;
+    if(search===""){
+        const group = document.getElementById("groupSelect").value;
+        filteredItems = menu.filter(i => i.group === group);
+    } else {
+        filteredItems = menu.filter(i => i.name.includes(search));
+    }
+
+    filteredItems.forEach(item => {
+        const index = menu.indexOf(item);
+        const row = document.createElement("div");
+        row.className="item-row";
+        row.innerHTML=`
+            <div class="item-name">${item.name}</div>
+            <div class="item-price">${item.price.toLocaleString()} تومان</div>
+            <div class="qty-control">
+                <button onclick="changeQty(${index},-1)">-</button>
+                <span id="qty${index}">${item.qty}</span>
+                <button onclick="changeQty(${index},1)">+</button>
+                <button onclick="editItem(${index})" style="background:#28a745;margin-left:5px;">✏️</button>
+                <button onclick="deleteItem(${index})" style="background:#dc3545;margin-left:5px;">🗑️</button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+
+    renderOrder();
+}
+
+// تغییر تعداد
+function changeQty(index,delta){
+    menu[index].qty += delta;
+    if(menu[index].qty<0) menu[index].qty=0;
+    document.getElementById(`qty${index}`).textContent=menu[index].qty;
+    renderOrder();
+    document.getElementById("searchItem").value=""; // پاک کردن جستجو پس از تغییر تعداد
+    document.getElementById("searchItem").focus();
+}
+
+// رندر فاکتور
+function renderOrder(){
+    const tbody=document.querySelector("#orderTable tbody");
+    tbody.innerHTML="";
+    let totalSum=0;
+    menu.forEach(o=>{
+        if(o.qty>0){
+            const total=o.price*o.qty;
+            totalSum+=total;
+            tbody.innerHTML+=`<tr><td>${o.name}</td><td>${o.qty}</td><td>${o.price.toLocaleString()}</td><td>${total.toLocaleString()}</td></tr>`;
+        }
+    });
+    document.getElementById("totalBar").textContent=`جمع کل: ${totalSum.toLocaleString()} تومان`;
+    document.getElementById("date").textContent=getPersianDate();
+}
+
+// پاک کردن سفارش
+function clearOrder(){menu.forEach(i=>i.qty=0); renderItems();}
+
+// چاپ فاکتور و ذخیره گزارش
+function printInvoice(){
+    let totalSum=0;
+    const orderItems = menu.filter(i=>i.qty>0);
+    if(orderItems.length===0){alert("هیچ سفارشی وجود ندارد!"); return;}
+    const win=window.open('','_blank');
+    let html=`<html><head><meta charset="UTF-8"><title>فاکتور</title></head><body style="font-family:Vazir;"><h2>فاکتور رستوران</h2><table border="1" style="border-collapse:collapse;width:100%"><tr><th>نام آیتم</th><th>تعداد</th><th>قیمت واحد</th><th>جمع</th></tr>`;
+    orderItems.forEach(o=>{const total=o.price*o.qty; totalSum+=total; html+=`<tr><td>${o.name}</td><td>${o.qty}</td><td>${o.price.toLocaleString()}</td><td>${total.toLocaleString()}</td></tr>`;});
+    html+=`</table><h3>جمع کل: ${totalSum.toLocaleString()} تومان</h3><p>${getPersianDate()}</p></body></html>`;
+    win.document.write(html); win.document.close();
+    report.push({date:getPersianDate(),total:totalSum});
+    localStorage.setItem("report",JSON.stringify(report));
+    clearOrder(); renderReport();
+}
+
+// گزارش روزانه
+function renderReport(){
+    const tbody=document.querySelector("#reportTable tbody");
+    tbody.innerHTML="";
+    report.forEach(r=>{tbody.innerHTML+=`<tr><td>${r.date}</td><td>${r.total.toLocaleString()}</td></tr>`;});
+}
+
+// پاک کردن گزارش
+function clearReport(){if(confirm("آیا مطمئن هستید؟")){report=[];localStorage.removeItem("report");renderReport();}}
+
+// تاریخ شمسی
+function getPersianDate(){
+    return new Intl.DateTimeFormat("fa-IR",{dateStyle:"full",timeStyle:"short"}).format(new Date());
+}
+
+// ویرایش منو
+function showMenuEditor(){
+    const action = prompt("عملیات: ۱-اضافه کردن، ۲-ویرایش یک آیتم، ۳-حذف آیتم\nعدد را وارد کنید:");
+    if(action==="1"){addItem();}
+    else if(action==="2"){let idx = parseInt(prompt("شماره آیتم برای ویرایش (ابتدا جستجو و شماره ردیف را مشاهده کنید):")); if(!isNaN(idx)) editItem(idx);}
+    else if(action==="3"){let idx = parseInt(prompt("شماره آیتم برای حذف:")); if(!isNaN(idx)) deleteItem(idx);}
+}
+
+// اضافه کردن آیتم
+function addItem(){
+    let name = prompt("نام آیتم جدید:");
+    if(!name) return;
+    let price = parseInt(prompt("قیمت (تومان):"));
+    if(isNaN(price)) return alert("قیمت معتبر نیست!");
+    let group = prompt("گروه آیتم:");
+    if(!group) group="سایر";
+    menu.push({name, price, group, qty:0});
+    renderGroupSelect(); renderItems();
+}
+
+// ویرایش آیتم
+function editItem(index){
+    if(index<0 || index>=menu.length) return;
+    let name = prompt("نام آیتم:", menu[index].name);
+    if(!name) return;
+    let price = parseInt(prompt("قیمت (تومان):", menu[index].price));
+    if(isNaN(price)) return alert("قیمت معتبر نیست!");
+    let group = prompt("گروه آیتم:", menu[index].group);
+    if(!group) group="سایر";
+    menu[index].name=name; menu[index].price=price; menu[index].group=group;
+    renderGroupSelect(); renderItems();
+}
+
+// حذف آیتم
+function deleteItem(index){
+    if(index<0 || index>=menu.length) return;
+    if(confirm(`آیا مطمئن هستید که "${menu[index].name}" حذف شود؟`)){
+        menu.splice(index,1);
+        renderGroupSelect(); renderItems();
+    }
+}
+
+// حالت شب
+function toggleNightMode(){document.body.classList.toggle("night"); document.querySelector("footer").classList.toggle("night");}
+
+// اجرا اولیه
+renderGroupSelect();
+renderItems();
+renderReport();
+</script>
+
+</body>
+</html>
